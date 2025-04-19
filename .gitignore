@@ -20,3 +20,6 @@ venv/
 README_old.md
 inactivity-monitor.code-workspace
 help.md
+venv/
+__pycache__/
+*.pyc
