@@ -59,6 +59,12 @@ class ConfigurationTab(Gtk.Grid):
         self.attach(self.email_entry, 1, row, 1, 1)
         row += 1
 
+        # === Email subject ===
+        self.subject_entry = Gtk.Entry()
+        self.attach(Gtk.Label(label="Email subject:"), 0, row, 1, 1)
+        self.attach(self.subject_entry, 1, row, 1, 1)
+        row += 1
+
         # === Email content textarea ===
         self.message_buffer = Gtk.TextBuffer()
         message_view = Gtk.TextView(buffer=self.message_buffer)
@@ -69,7 +75,7 @@ class ConfigurationTab(Gtk.Grid):
         message_frame.set_shadow_type(Gtk.ShadowType.IN)
         message_frame.add(message_view)
 
-        self.attach(Gtk.Label(label="Email message content:"), 0, row, 1, 1)
+        self.attach(Gtk.Label(label="Email message:"), 0, row, 1, 1)
         self.attach(message_frame, 1, row, 1, 1)
         row += 1
 
@@ -131,8 +137,8 @@ class ConfigurationTab(Gtk.Grid):
         try:
             self.timeout_entry.set_text(str(config.get("timeout_minutes", "")))
             self.email_entry.set_text(", ".join(config["email"].get("to", [])))
+            self.subject_entry.set_text(config.get("subject", ""))
             self.message_buffer.set_text(config.get("message", ""))
-
             self.smtp_host_entry.set_text(config["email"].get("smtp_server", ""))
             self.smtp_port_entry.set_text(str(config["email"].get("smtp_port", "")))
             self.smtp_user_entry.set_text(config["email"].get("smtp_user", ""))
@@ -150,6 +156,7 @@ class ConfigurationTab(Gtk.Grid):
         try:
             timeout = self.timeout_entry.get_text().strip()
             recipients = self.email_entry.get_text().strip()
+            subject = self.subject_entry.get_text().strip()
             smtp_host = self.smtp_host_entry.get_text().strip()
             smtp_port = self.smtp_port_entry.get_text().strip()
             smtp_user = self.smtp_user_entry.get_text().strip()
@@ -165,6 +172,7 @@ class ConfigurationTab(Gtk.Grid):
                 [
                     timeout,
                     recipients,
+                    subject,
                     smtp_host,
                     smtp_port,
                     smtp_user,
@@ -213,6 +221,7 @@ class ConfigurationTab(Gtk.Grid):
                     "smtp_user": smtp_user,
                     "smtp_pass": smtp_pass,
                 },
+                "subject": subject,
                 "message": message,
             }
 

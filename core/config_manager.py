@@ -81,7 +81,7 @@ def validate_config(data):
         bool: True if validation passes.
     """
     # Top-level required fields
-    required_fields = ["timeout_minutes", "email", "message"]
+    required_fields = ["timeout_minutes", "email", "message", "subject"]
     for field in required_fields:
         if field not in data or not data[field]:
             raise ValueError(f"Missing required field: {field}")
