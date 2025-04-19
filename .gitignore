@@ -1,0 +1,22 @@
+# 🔒 Exclude sensitive & generated files
+__pycache__/
+*.pyc
+*.log
+
+# 🐍 Python virtual env
+venv/
+
+# 🔑 Encrypted or sensitive data
+/etc/inactivity-monitor/
+*.key
+*.json
+
+# 📦 OS / editor specific
+.DS_Store
+*.swp
+*.bak
+
+# Others
+README_old.md
+inactivity-monitor.code-workspace
+help.md

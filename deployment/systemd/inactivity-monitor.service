@@ -1,0 +1,16 @@
+[Unit]
+Description=Inactivity Monitor background service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/inactivity-monitor/venv/bin/python /opt/inactivity-monitor/service/monitor.py
+WorkingDirectory=/opt/inactivity-monitor
+Environment=PYTHONPATH=/opt/inactivity-monitor
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/run/user/1000/gdm/Xauthority
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
