@@ -129,6 +129,9 @@ class ConfigurationTab(Gtk.Grid):
         """
         Load configuration from disk and populate form fields.
         """
+
+        self.main_window.log("Loading configuration.")
+
         config = load_config()
         if not config:
             self.main_window.log("No configuration found.")
@@ -249,6 +252,9 @@ class ConfigurationTab(Gtk.Grid):
         """
         self.test_smtp_button.set_sensitive(False)
         config = load_config()
+        self.main_window.log(
+            "An email will be sent to the SMTP address, or the address defined for monitoring."
+        )
         result = send_test_email(config)
         self.main_window.log(result)
         self.test_smtp_button.set_sensitive(True)

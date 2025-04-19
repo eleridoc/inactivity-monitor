@@ -2,6 +2,8 @@
 # 📁 PATH DEFINITIONS: Centralized file paths for config, logs, state
 # --------------------------------------------------------------------
 
+import os
+
 # Path to the main configuration file (JSON)
 CONFIG_PATH = "/etc/inactivity-monitor/config.json"
 
@@ -13,3 +15,6 @@ STATE_PATH = "/var/lib/inactivity-monitor/state.json"
 
 # Path to the file storing the encryption key used for password encryption
 KEY_PATH = "/etc/inactivity-monitor/key.key"
+
+# Path to the gui log file used by the gui
+GUI_LOG_PATH = os.path.expanduser("~/.config/inactivity-monitor/gui.log")

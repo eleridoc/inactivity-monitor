@@ -15,6 +15,7 @@ import subprocess
 from core.state import load_state
 from core.config_manager import load_config
 from core.utils import format_timestamp, get_threshold_info
+from core.service_utils import run_service_command
 
 
 class ServiceTab(Gtk.Grid):
@@ -223,20 +224,44 @@ class ServiceTab(Gtk.Grid):
 
     def on_restart_button_clicked(self, widget):
         """Callback for restarting the service."""
-        self.run_service_command("restart")
+        self.main_window.log("You asked to restart the service.")
+        try:
+            output = run_service_command("restart")
+            self.main_window.log(output or "Service restarted.")
+        except Exception as e:
+            self.main_window.log("Failed to restart the service.", e)
+
+        self.check_and_display_service_info()
 
     def on_start_button_clicked(self, widget):
         """Callback for starting the service."""
-        self.run_service_command("start")
+        self.main_window.log("You asked to start the service.")
+        try:
+            output = run_service_command("start")
+            self.main_window.log(output or "Service started.")
+        except Exception as e:
+            self.main_window.log("Failed to start the service.", e)
+
+        self.check_and_display_service_info()
 
     def on_stop_button_clicked(self, widget):
-        """Callback for stopping the service."""
-        self.run_service_command("stop")
+        """You asked to stop the service."""
+        self.main_window.log("You asked to stop the service.")
+        try:
+            output = run_service_command("stop")
+            self.main_window.log(output or "Service stopped.")
+        except Exception as e:
+            self.main_window.log("Failed to stop the service.", e)
+
+        self.check_and_display_service_info()
 
     def load_service_log(self, lines=100):
         """
         Load the last N lines of the service log file into the log viewer.
         """
+
+        self.main_window.log("Loading service logs.")
+
         try:
             if not os.path.exists(LOG_PATH):
                 self.service_log_buffer.set_text("service.log not found.")
@@ -247,9 +272,11 @@ class ServiceTab(Gtk.Grid):
 
             self.service_log_buffer.set_text("".join(content))
             GLib.idle_add(self.scroll_service_log_to_bottom)
+            self.main_window.log("Service log loading complete.")
 
         except Exception as e:
             self.service_log_buffer.set_text(f"Error reading service.log:\n{str(e)}")
+            self.main_window.log("Service log loading complete whith error:", e)
 
         return True
 
@@ -259,20 +286,3 @@ class ServiceTab(Gtk.Grid):
         """
         end_iter = self.service_log_buffer.get_end_iter()
         self.service_log_view.scroll_to_iter(end_iter, 0.0, True, 0.0, 1.0)
-
-    def run_service_command(self, command):
-        """
-        Execute a systemctl command (start, stop, restart) and update UI.
-        """
-        service_name = "inactivity-monitor"
-        command_dict = {
-            "start": f"sudo systemctl start {service_name}",
-            "stop": f"sudo systemctl stop {service_name}",
-            "restart": f"sudo systemctl restart {service_name}",
-        }
-
-        try:
-            os.system(command_dict.get(command))
-            self.check_and_display_service_info()
-        except Exception as e:
-            print(f"Error executing {command}: {e}")
