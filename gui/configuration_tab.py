@@ -137,11 +137,11 @@ class ConfigurationTab(Gtk.Grid):
         Load configuration from disk and populate form fields.
         """
 
-        self.main_window.log("Loading configuration.")
+        self.main_window.log("⏳ Loading configuration.")
 
         config = load_config()
         if not config:
-            self.main_window.log("No configuration found.")
+            self.main_window.log("❌ No configuration found.")
             return
 
         try:
@@ -154,15 +154,17 @@ class ConfigurationTab(Gtk.Grid):
             self.smtp_user_entry.set_text(config["email"].get("smtp_user", ""))
             self.smtp_pass_entry.set_text(config["email"].get("smtp_pass", ""))
 
-            self.main_window.log("Configuration loaded successfully.")
+            self.main_window.log("✅ Configuration loaded successfully.")
 
         except Exception as e:
-            self.main_window.log("Error loading configuration.", e)
+            self.main_window.log("❌ Error loading configuration.", e)
 
     def on_save_clicked(self, button):
         """
         Save configuration after validating all input fields.
         """
+
+        self.main_window.log("👤 You have requested to save the configuration.")
 
         def worker():
             try:
@@ -245,7 +247,7 @@ class ConfigurationTab(Gtk.Grid):
         self.test_smtp_button.set_sensitive(False)
         config = load_config(True)
         self.main_window.log(
-            "An email will be sent to the SMTP address, or the address defined for monitoring."
+            "✉️ An email will be sent to the SMTP address, or the address defined for monitoring."
         )
         result = send_test_email(config)
         self.main_window.log(result)

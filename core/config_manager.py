@@ -139,8 +139,12 @@ def save_config_with_privileges(data, main_window):
         )
 
         # Optionally log output
-        # main_window.log(f"Stdout: {result.stdout}")
-        # main_window.log(f"Stderr: {result.stderr}")
+        if result.stdout:
+            for line in result.stdout.strip().splitlines():
+                main_window.log(line)
+        if result.stderr:
+            for line in result.stderr.strip().splitlines():
+                main_window.log(line)
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to save config: {result.stderr.strip()}")

@@ -7,6 +7,8 @@
 # --------------------------------------------------------------------
 
 from datetime import datetime
+import logging
+import traceback
 
 
 def format_timestamp(ts):
@@ -50,3 +52,38 @@ def get_threshold_info(minutes):
         return ", ".join(parts)
     except ValueError:
         return ""
+
+
+def get_formated_log_message(message: str):
+    now = datetime.now().strftime("%H:%M:%S")
+    formated_message = f"[{now}] {message}"
+    return formated_message
+
+
+def build_log_entry(message: str, exception: Exception = None) -> str:
+    """
+    Build a full log entry string with timestamp and optional exception trace.
+
+    This also writes the same data to the logging system.
+
+    Args:
+        message (str): The message to log.
+        exception (Exception, optional): An exception to include.
+
+    Returns:
+        str: Full log text block (with timestamp) to be inserted in GUI.
+    """
+
+    log_lines = [get_formated_log_message(message)]
+
+    logging.info(message)
+
+    if exception:
+        trace = traceback.format_exception(
+            type(exception), exception, exception.__traceback__
+        )
+        log_lines.extend(line.rstrip() for line in trace)
+        for line in trace:
+            logging.info(line.strip())
+
+    return "".join(log_lines) + "\n"

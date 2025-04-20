@@ -22,6 +22,7 @@ sys.path.insert(0, project_root)
 
 from core.paths import CONFIG_PATH
 from core.crypto_utils import encrypt_password
+from core.service_utils import run_service_command
 
 
 def main():
@@ -80,7 +81,13 @@ def main():
         with open(CONFIG_PATH, "w") as f:
             json.dump(data, f, indent=4)
 
-        print("✅ Config saved successfully")
+        print("🔄 Now restart the service.")
+
+        try:
+            output = run_service_command("restart")
+            print(output or "✅ Service restarted.")
+        except Exception as e:
+            print("❌ Failed to restart the service.", e)
 
     except Exception as e:
         print(f"❌ Error during save: {e}", file=sys.stderr)

@@ -28,6 +28,7 @@ import traceback
 from datetime import datetime
 from gui.service_tab import ServiceTab
 from gui.configuration_tab import ConfigurationTab
+from core.utils import build_log_entry
 
 
 from core.version import __version__
@@ -93,28 +94,17 @@ class MainWindow(Gtk.Window):
 
         main_box.pack_start(log_frame, False, False, 0)
 
-    def log(self, text, exception=None):
+    def log(self, message, exception=None):
         """
-        Append a message (and optionally an exception trace) to the log panel.
+        Append a message to the GUI log view and system log.
 
         Args:
-            text (str): The message to display.
-            exception (Exception, optional): An exception to log if provided.
+            message (str): The message to log.
+            exception (Exception, optional): An exception to include.
         """
-        now = datetime.now().strftime("%H:%M:%S")
+        full_text = build_log_entry(message, exception)
         end_iter = self.log_buffer.get_end_iter()
-        self.log_buffer.insert(end_iter, f"[{now}] {text}\n")
-
-        logging.info(text)
-
-        # If an exception is provided, display the full traceback
-        if exception:
-            tb_lines = traceback.format_exception(
-                type(exception), exception, exception.__traceback__
-            )
-            for line in tb_lines:
-                self.log_buffer.insert(end_iter, line)
-                logging.info(line.strip())
+        self.log_buffer.insert(end_iter, full_text)
 
 
 def launch_gui():

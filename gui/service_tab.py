@@ -224,34 +224,34 @@ class ServiceTab(Gtk.Grid):
 
     def on_restart_button_clicked(self, widget):
         """Callback for restarting the service."""
-        self.main_window.log("You asked to restart the service.")
+        self.main_window.log("👤 You asked to restart the service.")
         try:
             output = run_service_command("restart")
-            self.main_window.log(output or "Service restarted.")
+            self.main_window.log(output or "✅ Service restarted.")
         except Exception as e:
-            self.main_window.log("Failed to restart the service.", e)
+            self.main_window.log("❌ Failed to restart the service.", e)
 
         self.check_and_display_service_info()
 
     def on_start_button_clicked(self, widget):
         """Callback for starting the service."""
-        self.main_window.log("You asked to start the service.")
+        self.main_window.log("👤 You asked to start the service.")
         try:
             output = run_service_command("start")
-            self.main_window.log(output or "Service started.")
+            self.main_window.log(output or "✅ Service started.")
         except Exception as e:
-            self.main_window.log("Failed to start the service.", e)
+            self.main_window.log("❌ Failed to start the service.", e)
 
         self.check_and_display_service_info()
 
     def on_stop_button_clicked(self, widget):
         """You asked to stop the service."""
-        self.main_window.log("You asked to stop the service.")
+        self.main_window.log("👤 You asked to stop the service.")
         try:
             output = run_service_command("stop")
-            self.main_window.log(output or "Service stopped.")
+            self.main_window.log(output or "✅ Service stopped.")
         except Exception as e:
-            self.main_window.log("Failed to stop the service.", e)
+            self.main_window.log("❌ Failed to stop the service.", e)
 
         self.check_and_display_service_info()
 
@@ -260,7 +260,7 @@ class ServiceTab(Gtk.Grid):
         Load the last N lines of the service log file into the log viewer.
         """
 
-        self.main_window.log("Loading service logs.")
+        self.main_window.log("⏳ Loading service logs.")
 
         try:
             if not os.path.exists(LOG_PATH):
@@ -272,11 +272,11 @@ class ServiceTab(Gtk.Grid):
 
             self.service_log_buffer.set_text("".join(content))
             GLib.idle_add(self.scroll_service_log_to_bottom)
-            self.main_window.log("Service log loading complete.")
+            self.main_window.log("✅ Service log loading complete.")
 
         except Exception as e:
             self.service_log_buffer.set_text(f"Error reading service.log:\n{str(e)}")
-            self.main_window.log("Service log loading complete whith error:", e)
+            self.main_window.log("⚠️ Service log loading complete whith error:", e)
 
         return True
 
