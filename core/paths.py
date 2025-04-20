@@ -18,3 +18,6 @@ KEY_PATH = "/etc/inactivity-monitor/key.key"
 
 # Path to the gui log file used by the gui
 GUI_LOG_PATH = os.path.expanduser("~/.config/inactivity-monitor/gui.log")
+
+# Path to the settings file (JSON)
+SETTINGS_PATH = "/etc/inactivity-monitor/settings.json"

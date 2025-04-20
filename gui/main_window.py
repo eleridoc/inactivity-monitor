@@ -28,6 +28,7 @@ import traceback
 from datetime import datetime
 from gui.service_tab import ServiceTab
 from gui.configuration_tab import ConfigurationTab
+from gui.settings_tab import SettingsTab
 from core.utils import build_log_entry
 
 
@@ -75,6 +76,10 @@ class MainWindow(Gtk.Window):
         # === Tab 2: Configuration ===
         self.configuration_tab = ConfigurationTab(self)
         notebook.append_page(self.configuration_tab, Gtk.Label(label="Configuration"))
+
+        # === Tab 3: Configuration ===
+        self.settings_tab = SettingsTab(self)
+        notebook.append_page(self.settings_tab, Gtk.Label(label="Settings"))
 
         # === Log viewer (bottom panel) ===
         log_view = Gtk.TextView(buffer=self.log_buffer)

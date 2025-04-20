@@ -8,19 +8,15 @@
 
 from gi.repository import Gtk, GLib
 import threading
-from email_validator import EmailNotValidError
 from core.config_manager import (
     load_config,
     save_config_with_privileges,
     validate_config,
 )
 from core.email_utils import (
-    validate_email_address,
-    validate_recipient_list,
     send_test_email,
 )
 from core.utils import get_threshold_info
-from core.service_utils import run_service_command
 
 
 class ConfigurationTab(Gtk.Grid):
@@ -160,16 +156,19 @@ class ConfigurationTab(Gtk.Grid):
             self.main_window.log("❌ Error loading configuration.", e)
 
     def on_save_clicked(self, button):
+        """ "
+        Validate config and save if valid. Avoid privilege elevation if invalid.
         """
-        Save configuration after validating all input fields.
-        """
-
         self.main_window.log("👤 You have requested to save the configuration.")
+
+        try:
+            config = self.build_config()  # Peut lever une exception
+        except Exception as e:
+            self.main_window.log("❌ Invalid configuration. Please fix errors.", e)
+            return
 
         def worker():
             try:
-                # ⏳ Cette partie est déplacée dans un thread
-                config = self.build_config()
                 save_config_with_privileges(config, self.main_window)
                 GLib.idle_add(
                     self.main_window.log, "✅ Configuration saved successfully."
@@ -181,12 +180,11 @@ class ConfigurationTab(Gtk.Grid):
 
     def build_config(self):
         """
-        Build and validate config from user input.
-        Raises exception if validation fails.
-        Returns config dict.
+        Build config from user input. Raises if validation fails.
         """
         timeout = self.timeout_entry.get_text().strip()
         recipients = self.email_entry.get_text().strip()
+        subject = self.subject_entry.get_text().strip()
         smtp_host = self.smtp_host_entry.get_text().strip()
         smtp_port = self.smtp_port_entry.get_text().strip()
         smtp_user = self.smtp_user_entry.get_text().strip()
@@ -196,37 +194,22 @@ class ConfigurationTab(Gtk.Grid):
         end_iter = self.message_buffer.get_end_iter()
         message = self.message_buffer.get_text(start_iter, end_iter, True).strip()
 
-        if not all([timeout, recipients, smtp_host, smtp_port, smtp_user, message]):
-            raise ValueError("All fields (except password) must be filled.")
-
-        try:
-            timeout_minutes = int(timeout)
-            smtp_port_int = int(smtp_port)
-        except ValueError:
-            raise ValueError("Timeout and SMTP port must be numbers.")
-
-        from core.email_utils import validate_email_address, validate_recipient_list
-        from email_validator import EmailNotValidError
-
-        valid_emails = validate_recipient_list(recipients)
-        validate_email_address(smtp_user)
-
         config = {
-            "timeout_minutes": timeout_minutes,
+            "timeout_minutes": int(timeout),
             "email": {
-                "to": valid_emails,
+                "to": [r.strip() for r in recipients.split(",") if r.strip()],
                 "smtp_server": smtp_host,
-                "smtp_port": smtp_port_int,
+                "smtp_port": int(smtp_port),
                 "smtp_user": smtp_user,
                 "smtp_pass": smtp_pass,
             },
             "message": message,
-            "subject": "Inactivity alert",  # or get it from a field if you add one
+            "subject": subject,
         }
 
-        from core.config_manager import validate_config
-
+        # This will raise an error if invalid, caught in the worker
         validate_config(config)
+
         return config
 
     def display_threshold_info(self, widget):
