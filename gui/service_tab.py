@@ -9,7 +9,15 @@
 # --------------------------------------------------------------------
 
 from gi.repository import Gtk, GLib
-from core.paths import LOG_PATH
+from core.paths import (
+    LOG_PATH,
+    CONFIG_PATH,
+    STATE_PATH,
+    KEY_PATH,
+    GUI_LOG_PATH,
+    SETTINGS_PATH,
+)
+
 import os
 import subprocess
 from core.state import load_state
@@ -32,6 +40,14 @@ class ServiceTab(Gtk.Grid):
         self.main_window = main_window
         self.service_info_labels = {}
         self.build_ui()
+
+        self.service_info_labels["LOG_PATH"].set_text(f"tail -f {LOG_PATH}")
+        self.service_info_labels["GUI_LOG_PATH"].set_text(f"tail -f {GUI_LOG_PATH}")
+        self.service_info_labels["CONFIG_PATH"].set_text(f"cat {CONFIG_PATH}")
+        self.service_info_labels["SETTINGS_PATH"].set_text(f"cat {SETTINGS_PATH}")
+        self.service_info_labels["STATE_PATH"].set_text(f"cat {STATE_PATH}")
+        self.service_info_labels["KEY_PATH"].set_text(f"{KEY_PATH}")
+
         GLib.timeout_add(3000, self.check_and_display_service_info)
         self.load_service_log()
 
@@ -66,11 +82,13 @@ class ServiceTab(Gtk.Grid):
             ("status", "Service status:"),
             ("last_login", "Last login:"),
             ("last_input", "Last activity:"),
-            ("threshold_reached", "Threshold reached?"),
             ("threshold", "Threshold:"),
-            ("30_percent_monitoring", "30% mail sent?"),
-            ("60_percent_monitoring", "60% mail sent?"),
-            ("90_percent_monitoring", "90% mail sent?"),
+            ("LOG_PATH", "LOG_PATH"),
+            ("GUI_LOG_PATH", "GUI_LOG_PATH"),
+            ("CONFIG_PATH", "CONFIG_PATH"),
+            ("SETTINGS_PATH", "SETTINGS_PATH"),
+            ("STATE_PATH", "STATE_PATH"),
+            ("KEY_PATH", "KEY_PATH"),
         ]:
             add_info_row(key, text)
 
@@ -153,9 +171,6 @@ class ServiceTab(Gtk.Grid):
         if not config:
             for key in [
                 "threshold",
-                "30_percent_monitoring",
-                "60_percent_monitoring",
-                "90_percent_monitoring",
             ]:
                 self.service_info_labels[key].set_text("⚠️ No configuration found.")
         else:
