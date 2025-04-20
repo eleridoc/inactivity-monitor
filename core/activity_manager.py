@@ -15,32 +15,36 @@ from datetime import datetime
 # Add project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.state import load_state, save_state
+from core.state_manager import load_state, save_state
 from core.system import is_user_logged_in, get_last_login_time
 from core.input import get_last_input_time
 
 
-def manage_activity_time():
+def manage_activity_time(state, now):
     """
-    Update the state file with the most recent login or input activity timestamps.
+    Update the activity-related timestamps in the given state dictionary.
 
-    This function:
-    - Reads the latest login time using psutil.
-    - Checks the last user input (keyboard/mouse) time using xprintidle.
-    - Compares with previously saved timestamps.
-    - Updates the state file if more recent values are found.
+    This function checks the last login time and last user input (keyboard/mouse)
+    time. If these times are more recent than what is currently stored in the
+    state, it updates them accordingly.
+
+    Other fields in the state (such as monitoring flags or service status flags)
+    are preserved and returned as-is.
+
+    Args:
+        state (dict): A dictionary containing the application's persistent state,
+                      including 'last_login_timestamp', 'last_input_timestamp',
+                      and additional runtime flags.
+        now (datetime.datetime): The current datetime used for context and logging.
 
     Returns:
-        dict: Updated state containing 'last_login_timestamp' and 'last_input_timestamp'.
+        dict: The updated state dictionary with potentially newer timestamps.
     """
-    now = datetime.now()
 
     # Get current login and idle times
     last_login = get_last_login_time()
     last_idle = get_last_input_time()
 
-    # Load previous state from disk
-    state = load_state()
     last_login_timestamp = state["last_login_timestamp"]
     last_input_timestamp = state["last_input_timestamp"]
 
@@ -71,9 +75,6 @@ def manage_activity_time():
             )
         else:
             logging.info("👤 User is logged out. No input time available.")
-
-    # 💾 Save the updated state to disk
-    save_state(state)
 
     # Log final timestamps
     logging.info(f"new_last_login_timestamp: {state['last_login_timestamp']}")

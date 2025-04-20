@@ -20,7 +20,7 @@ from core.paths import (
 
 import os
 import subprocess
-from core.state import load_state
+from core.state_manager import load_state
 from core.config_manager import load_config
 from core.utils import format_timestamp, get_threshold_info
 from core.service_utils import run_service_command

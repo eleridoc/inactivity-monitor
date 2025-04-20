@@ -23,6 +23,7 @@ DEFAULT_SETTINGS = {
     "monitoring_at_30": False,
     "monitoring_at_60": False,
     "monitoring_at_90": False,
+    "startup_error": False,
 }
 
 
