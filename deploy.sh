@@ -31,6 +31,10 @@ sudo rsync -a --delete "${EXCLUDES[@]}" . "$TARGET_DIR/"
 # Ensure scripts are executable
 sudo chmod +x "$TARGET_DIR/scripts/install_venv.sh"
 sudo chmod +x "$TARGET_DIR/scripts/restart.sh"
+sudo chmod +x "$TARGET_DIR/scripts/control_service_helper.py"
+sudo chmod +x "$TARGET_DIR/scripts/save_config_helper.py"
+sudo chmod +x "$TARGET_DIR/scripts/read_password_helper.py"
+sudo chmod +x "$TARGET_DIR/scripts/encrypt_password_helper.py"
 
 # Deploy systemd service file if exists
 if [ -f "$SERVICE_FILE_PATH" ]; then

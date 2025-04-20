@@ -14,6 +14,6 @@ status:
 	sudo systemctl status $(SERVICE_NAME) --no-pager
 
 run:
-	sudo /opt/inactivity-monitor/venv/bin/python /opt/inactivity-monitor/main.py
+	/opt/inactivity-monitor/venv/bin/python /opt/inactivity-monitor/main.py
 
 all: deploy install restart run

@@ -6,15 +6,21 @@
 # It allows testing the SMTP configuration and provides form validation.
 # --------------------------------------------------------------------
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
+import threading
 from email_validator import EmailNotValidError
-from core.config_manager import load_config, save_config, validate_config
+from core.config_manager import (
+    load_config,
+    save_config_with_privileges,
+    validate_config,
+)
 from core.email_utils import (
     validate_email_address,
     validate_recipient_list,
     send_test_email,
 )
 from core.utils import get_threshold_info
+from core.service_utils import run_service_command
 
 
 class ConfigurationTab(Gtk.Grid):
@@ -106,6 +112,7 @@ class ConfigurationTab(Gtk.Grid):
 
         self.smtp_pass_entry = Gtk.Entry()
         self.smtp_pass_entry.set_visibility(False)
+        self.smtp_pass_entry.set_placeholder_text("(leave blank to keep current)")
         self.attach(Gtk.Label(label="SMTP password:"), 0, row, 1, 1)
         self.attach(self.smtp_pass_entry, 1, row, 1, 1)
         row += 1
@@ -154,86 +161,71 @@ class ConfigurationTab(Gtk.Grid):
 
     def on_save_clicked(self, button):
         """
-        Validate and save the current form values to the configuration file.
+        Save configuration after validating all input fields.
         """
-        try:
-            timeout = self.timeout_entry.get_text().strip()
-            recipients = self.email_entry.get_text().strip()
-            subject = self.subject_entry.get_text().strip()
-            smtp_host = self.smtp_host_entry.get_text().strip()
-            smtp_port = self.smtp_port_entry.get_text().strip()
-            smtp_user = self.smtp_user_entry.get_text().strip()
-            smtp_pass = self.smtp_pass_entry.get_text().strip()
 
-            # Get message from text buffer
-            start_iter = self.message_buffer.get_start_iter()
-            end_iter = self.message_buffer.get_end_iter()
-            message = self.message_buffer.get_text(start_iter, end_iter, True).strip()
-
-            # Validate required fields
-            if not all(
-                [
-                    timeout,
-                    recipients,
-                    subject,
-                    smtp_host,
-                    smtp_port,
-                    smtp_user,
-                    smtp_pass,
-                    message,
-                ]
-            ):
-                self.main_window.log(
-                    "All fields are required. Please fill in all fields."
+        def worker():
+            try:
+                # ⏳ Cette partie est déplacée dans un thread
+                config = self.build_config()
+                save_config_with_privileges(config, self.main_window)
+                GLib.idle_add(
+                    self.main_window.log, "✅ Configuration saved successfully."
                 )
-                return
+            except Exception as e:
+                GLib.idle_add(self.main_window.log, "❌ Error saving configuration.", e)
 
-            # Validate types
-            try:
-                timeout_minutes = int(timeout)
-            except ValueError:
-                self.main_window.log("Inactivity timeout must be a number.")
-                return
+        threading.Thread(target=worker, daemon=True).start()
 
-            try:
-                smtp_port_int = int(smtp_port)
-            except ValueError:
-                self.main_window.log("SMTP port must be a number.")
-                return
+    def build_config(self):
+        """
+        Build and validate config from user input.
+        Raises exception if validation fails.
+        Returns config dict.
+        """
+        timeout = self.timeout_entry.get_text().strip()
+        recipients = self.email_entry.get_text().strip()
+        smtp_host = self.smtp_host_entry.get_text().strip()
+        smtp_port = self.smtp_port_entry.get_text().strip()
+        smtp_user = self.smtp_user_entry.get_text().strip()
+        smtp_pass = self.smtp_pass_entry.get_text().strip()
 
-            # Validate email addresses
-            try:
-                valid_emails = validate_recipient_list(recipients)
-            except EmailNotValidError as e:
-                self.main_window.log(f"Invalid recipient email: {e}")
-                return
+        start_iter = self.message_buffer.get_start_iter()
+        end_iter = self.message_buffer.get_end_iter()
+        message = self.message_buffer.get_text(start_iter, end_iter, True).strip()
 
-            try:
-                validate_email_address(smtp_user)
-            except EmailNotValidError as e:
-                self.main_window.log(f"Invalid SMTP username: {e}")
-                return
+        if not all([timeout, recipients, smtp_host, smtp_port, smtp_user, message]):
+            raise ValueError("All fields (except password) must be filled.")
 
-            # Assemble config dictionary
-            config = {
-                "timeout_minutes": timeout_minutes,
-                "email": {
-                    "to": valid_emails,
-                    "smtp_server": smtp_host,
-                    "smtp_port": smtp_port_int,
-                    "smtp_user": smtp_user,
-                    "smtp_pass": smtp_pass,
-                },
-                "subject": subject,
-                "message": message,
-            }
+        try:
+            timeout_minutes = int(timeout)
+            smtp_port_int = int(smtp_port)
+        except ValueError:
+            raise ValueError("Timeout and SMTP port must be numbers.")
 
-            validate_config(config)
-            save_config(config)
-            self.main_window.log("Configuration saved successfully.")
+        from core.email_utils import validate_email_address, validate_recipient_list
+        from email_validator import EmailNotValidError
 
-        except Exception as e:
-            self.main_window.log("Error saving configuration.", e)
+        valid_emails = validate_recipient_list(recipients)
+        validate_email_address(smtp_user)
+
+        config = {
+            "timeout_minutes": timeout_minutes,
+            "email": {
+                "to": valid_emails,
+                "smtp_server": smtp_host,
+                "smtp_port": smtp_port_int,
+                "smtp_user": smtp_user,
+                "smtp_pass": smtp_pass,
+            },
+            "message": message,
+            "subject": "Inactivity alert",  # or get it from a field if you add one
+        }
+
+        from core.config_manager import validate_config
+
+        validate_config(config)
+        return config
 
     def display_threshold_info(self, widget):
         """
@@ -251,7 +243,7 @@ class ConfigurationTab(Gtk.Grid):
         Attempt to send a test email using the current SMTP configuration.
         """
         self.test_smtp_button.set_sensitive(False)
-        config = load_config()
+        config = load_config(True)
         self.main_window.log(
             "An email will be sent to the SMTP address, or the address defined for monitoring."
         )

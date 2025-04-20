@@ -43,7 +43,7 @@ def main():
     logging.info("📡 Inactivity Monitor started.")
 
     # Load and validate configuration
-    config = load_config()
+    config = load_config(True)
     if not config:
         logging.error("No configuration found. Aborting monitor.")
         return

@@ -11,13 +11,25 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 import os
+import logging
+from core.paths import GUI_LOG_PATH
+
+# Setup GUI logger
+os.makedirs(os.path.dirname(GUI_LOG_PATH), exist_ok=True)
+
+logging.basicConfig(
+    filename=GUI_LOG_PATH,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
 from gi.repository import Gtk
 import traceback
 from datetime import datetime
 from gui.service_tab import ServiceTab
 from gui.configuration_tab import ConfigurationTab
-import logging
-from core.paths import GUI_LOG_PATH
+
+
 from core.version import __version__
 
 
@@ -33,14 +45,6 @@ class MainWindow(Gtk.Window):
         """
         super().__init__(title="Inactivity Monitor")
 
-        # Setup GUI logger
-        os.makedirs(os.path.dirname(GUI_LOG_PATH), exist_ok=True)
-        logging.basicConfig(
-            filename=GUI_LOG_PATH,
-            level=logging.INFO,
-            format="%(asctime)s [%(levelname)s] %(message)s",
-        )
-
         self.build_ui()
 
     def build_ui(self):
@@ -53,7 +57,7 @@ class MainWindow(Gtk.Window):
         # === Log view must be created early so tabs can use it ===
         self.log_buffer = Gtk.TextBuffer()
 
-        self.log(f"START Inactivity Monitor GUI, version: { __version__ }")
+        self.log(f"📝 Start Inactivity Monitor GUI [ version: { __version__ } ]")
 
         # === Main vertical layout ===
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
