@@ -159,6 +159,8 @@ class ConfigurationTab(Gtk.Grid):
         """ "
         Validate config and save if valid. Avoid privilege elevation if invalid.
         """
+
+        self.main_window.log("-------------------------------------------")
         self.main_window.log("👤 You have requested to save the configuration.")
 
         try:
@@ -228,6 +230,7 @@ class ConfigurationTab(Gtk.Grid):
         Send a test email using a privileged script with decrypted config.
         """
         self.test_smtp_button.set_sensitive(False)
+        self.main_window.log("-------------------------------------------")
         self.main_window.log("✉️ Sending test email using privileged script...")
 
         def worker():
@@ -246,7 +249,7 @@ class ConfigurationTab(Gtk.Grid):
                     text=True,
                     check=True,
                 )
-                GLib.idle_add(self.main_window.log, result.stdout.strip())
+                GLib.idle_add(self.main_window.log, "✅ Test email sent successfully.")
             except subprocess.CalledProcessError as e:
                 GLib.idle_add(self.main_window.log, "❌ Test email failed.", e)
 

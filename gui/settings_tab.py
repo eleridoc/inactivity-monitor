@@ -124,6 +124,8 @@ class SettingsTab(Gtk.Grid):
         Save settings after validating input fields.
         Prevents privilege elevation if validation fails.
         """
+
+        self.main_window.log("-------------------------------------------")
         self.main_window.log("👤 You have requested to save the settings.")
 
         try:

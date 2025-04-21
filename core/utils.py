@@ -54,28 +54,33 @@ def get_threshold_info(minutes):
         return ""
 
 
-def get_formated_log_message(message: str):
+def get_formatted_log_message(message: str) -> str:
+    """
+    Format a log message with a timestamp.
+
+    Args:
+        message (str): Message to log.
+
+    Returns:
+        str: Formatted string with timestamp.
+    """
     now = datetime.now().strftime("%H:%M:%S")
-    formated_message = f"[{now}] {message}"
-    return formated_message
+    return f"[{now}] {message}"
 
 
 def build_log_entry(message: str, exception: Exception = None) -> str:
     """
     Build a full log entry string with timestamp and optional exception trace.
-
-    This also writes the same data to the logging system.
+    This also logs the same messages to the system logging.
 
     Args:
         message (str): The message to log.
         exception (Exception, optional): An exception to include.
 
     Returns:
-        str: Full log text block (with timestamp) to be inserted in GUI.
+        str: Full block to insert into the GUI log.
     """
-
-    log_lines = [get_formated_log_message(message)]
-
+    log_lines = [get_formatted_log_message(message)]
     logging.info(message)
 
     if exception:
@@ -86,4 +91,23 @@ def build_log_entry(message: str, exception: Exception = None) -> str:
         for line in trace:
             logging.info(line.strip())
 
-    return "".join(log_lines) + "\n"
+    return "\n".join(log_lines) + "\n"
+
+
+def log_to_gui_buffer(log_buffer, log_view, message: str, exception: Exception = None):
+    """
+    Insert a log message (with optional exception) into the GTK text buffer and scroll down.
+
+    Args:
+        log_buffer (Gtk.TextBuffer): The text buffer used for logging.
+        log_view (Gtk.TextView): The view displaying the buffer.
+        message (str): The message to display.
+        exception (Exception, optional): An optional exception to include.
+    """
+    full_text = build_log_entry(message, exception)
+    end_iter = log_buffer.get_end_iter()
+    log_buffer.insert(end_iter, full_text)
+
+    # Create a mark and scroll to it reliably
+    mark = log_buffer.create_mark(None, log_buffer.get_end_iter(), False)
+    log_view.scroll_to_mark(mark, 0.0, True, 0.0, 1.0)

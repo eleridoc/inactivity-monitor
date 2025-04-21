@@ -6,7 +6,7 @@
 # - Encrypting and saving sensitive fields (SMTP password)
 # - Validating the required fields and data types
 # --------------------------------------------------------------------
-
+from gi.repository import GLib
 import os
 import json
 import subprocess
@@ -138,13 +138,14 @@ def save_config_with_privileges(data, main_window):
             text=True,
         )
 
-        # Optionally log output
-        if result.stdout:
-            for line in result.stdout.strip().splitlines():
-                main_window.log(line)
-        if result.stderr:
-            for line in result.stderr.strip().splitlines():
-                main_window.log(line)
+        # Forward output to GUI logs
+        # if main_window:
+        #     if result.stdout:
+        #         for line in result.stdout.strip().splitlines():
+        #             GLib.idle_add(main_window.log, line)
+        #     if result.stderr:
+        #         for line in result.stderr.strip().splitlines():
+        #             GLib.idle_add(main_window.log, line)
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to save config: {result.stderr.strip()}")

@@ -41,8 +41,8 @@ class ServiceTab(Gtk.Grid):
         self.service_info_labels = {}
         self.build_ui()
 
-        self.service_info_labels["LOG_PATH"].set_text(f"tail -f {LOG_PATH}")
-        self.service_info_labels["GUI_LOG_PATH"].set_text(f"tail -f {GUI_LOG_PATH}")
+        self.service_info_labels["LOG_PATH"].set_text(f"tail -n 200 {LOG_PATH}")
+        self.service_info_labels["GUI_LOG_PATH"].set_text(f"tail -n 200 {GUI_LOG_PATH}")
         self.service_info_labels["CONFIG_PATH"].set_text(f"cat {CONFIG_PATH}")
         self.service_info_labels["SETTINGS_PATH"].set_text(f"cat {SETTINGS_PATH}")
         self.service_info_labels["STATE_PATH"].set_text(f"cat {STATE_PATH}")
@@ -107,8 +107,8 @@ class ServiceTab(Gtk.Grid):
 
         # === Service control buttons ===
         self.restart_button = Gtk.Button(label="Restart Service")
-        self.start_button = Gtk.Button(label="Start Service")
-        self.stop_button = Gtk.Button(label="Stop Service")
+        self.start_button = Gtk.Button(label="Enable service")
+        self.stop_button = Gtk.Button(label="Disable service")
 
         self.restart_button.connect(
             "clicked", lambda b: self.on_restart_button_clicked("restart")
@@ -239,6 +239,7 @@ class ServiceTab(Gtk.Grid):
 
     def on_restart_button_clicked(self, widget):
         """Callback for restarting the service."""
+        self.main_window.log("-------------------------------------------")
         self.main_window.log("👤 You asked to restart the service.")
         try:
             output = run_service_command("restart")
@@ -250,6 +251,7 @@ class ServiceTab(Gtk.Grid):
 
     def on_start_button_clicked(self, widget):
         """Callback for starting the service."""
+        self.main_window.log("-------------------------------------------")
         self.main_window.log("👤 You asked to start the service.")
         try:
             output = run_service_command("start")
@@ -261,6 +263,7 @@ class ServiceTab(Gtk.Grid):
 
     def on_stop_button_clicked(self, widget):
         """You asked to stop the service."""
+        self.main_window.log("-------------------------------------------")
         self.main_window.log("👤 You asked to stop the service.")
         try:
             output = run_service_command("stop")

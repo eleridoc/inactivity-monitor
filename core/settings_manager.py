@@ -6,7 +6,7 @@
 # - Validating optional fields (e.g. custom monitoring sender email)
 # - Saving settings with elevated privileges via a helper script
 # --------------------------------------------------------------------
-
+from gi.repository import GLib
 import os
 import json
 import tempfile
@@ -89,9 +89,6 @@ def save_settings_with_privileges(settings: dict, main_window=None):
             )
         )
 
-        if main_window:
-            main_window.log("🔐 Saving settings using helper script...")
-
         result = subprocess.run(
             ["pkexec", "python3", helper_path, tmp_path],
             stdout=subprocess.PIPE,
@@ -100,13 +97,13 @@ def save_settings_with_privileges(settings: dict, main_window=None):
         )
 
         # Forward output to GUI logs
-        if main_window:
-            if result.stdout:
-                for line in result.stdout.strip().splitlines():
-                    main_window.log(line)
-            if result.stderr:
-                for line in result.stderr.strip().splitlines():
-                    main_window.log(line)
+        # if main_window:
+        #     if result.stdout:
+        #         for line in result.stdout.strip().splitlines():
+        #             GLib.idle_add(main_window.log, line)
+        #     if result.stderr:
+        #         for line in result.stderr.strip().splitlines():
+        #             GLib.idle_add(main_window.log, line)
 
         # Raise if command failed
         if result.returncode != 0:
