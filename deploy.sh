@@ -39,6 +39,14 @@ sudo chmod +x "$TARGET_DIR/scripts/save_settings_helper.py"
 sudo cp ./deployment/inactivity-monitor.desktop /usr/share/applications/
 sudo chmod +x /usr/share/applications/inactivity-monitor.desktop
 
+sudo cp ./assets/icons/icon-16.png /usr/share/icons/hicolor/16x16/apps/inactivity-monitor.png
+sudo cp ./assets/icons/icon-32.png /usr/share/icons/hicolor/32x32/apps/inactivity-monitor.png
+sudo cp ./assets/icons/icon-48.png /usr/share/icons/hicolor/48x48/apps/inactivity-monitor.png
+sudo cp ./assets/icons/icon-64.png /usr/share/icons/hicolor/64x64/apps/inactivity-monitor.png
+sudo cp ./assets/icons/icon-128.png /usr/share/icons/hicolor/128x128/apps/inactivity-monitor.png
+sudo cp ./assets/icons/icon-256.png /usr/share/icons/hicolor/256x256/apps/inactivity-monitor.png
+
+
 gtk-update-icon-cache
 update-desktop-database
 
