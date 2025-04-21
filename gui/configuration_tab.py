@@ -225,13 +225,31 @@ class ConfigurationTab(Gtk.Grid):
 
     def on_test_smtp_clicked(self, button):
         """
-        Attempt to send a test email using the current SMTP configuration.
+        Send a test email using a privileged script with decrypted config.
         """
         self.test_smtp_button.set_sensitive(False)
-        config = load_config(True)
-        self.main_window.log(
-            "✉️ An email will be sent to the SMTP address, or the address defined for monitoring."
-        )
-        result = send_test_email(config)
-        self.main_window.log(result)
-        self.test_smtp_button.set_sensitive(True)
+        self.main_window.log("✉️ Sending test email using privileged script...")
+
+        def worker():
+            import subprocess
+            import os
+
+            script_path = os.path.join(
+                os.path.dirname(__file__), "..", "scripts", "send_test_email_helper.py"
+            )
+            script_path = os.path.abspath(script_path)
+
+            try:
+                result = subprocess.run(
+                    ["pkexec", "python3", script_path],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                GLib.idle_add(self.main_window.log, result.stdout.strip())
+            except subprocess.CalledProcessError as e:
+                GLib.idle_add(self.main_window.log, "❌ Test email failed.", e)
+
+            GLib.idle_add(self.test_smtp_button.set_sensitive, True)
+
+        threading.Thread(target=worker, daemon=True).start()

@@ -2,10 +2,10 @@
 # 🧠 MONITORING LOOP: Core background logic for user inactivity checks
 # --------------------------------------------------------------------
 # This script is executed by the systemd service. It:
-# - Loads the configuration file
-# - Periodically checks for last user login and input activity
-# - Calculates inactivity duration
-# - Logs warnings when the threshold is exceeded
+# - Loads the configuration and settings
+# - Monitors keyboard/mouse activity and user logins
+# - Sends notification emails at various inactivity thresholds
+# - Stops when maximum inactivity duration is exceeded
 # --------------------------------------------------------------------
 
 import time
@@ -21,11 +21,22 @@ from core.paths import LOG_PATH
 from core.config_manager import load_config, validate_config
 from core.activity_manager import manage_activity_time
 from core.state_manager import load_state, save_state
+from core.settings_manager import load_settings
+from core.email_utils import (
+    send_start_reached_email,
+    send_start_disabled_email,
+    send_start_email,
+    send_threshold_30_email,
+    send_threshold_60_email,
+    send_threshold_90_email,
+    send_alert_to_recipient,
+    send_alert_to_monitoring,
+)
 
-# Ensure the log directory exists
+# Ensure log directory exists
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-# Configure global logger for this script
+# Configure logging for the background service
 logging.basicConfig(
     filename=LOG_PATH,
     level=logging.INFO,
@@ -35,15 +46,24 @@ logging.basicConfig(
 
 def main():
     """
-    Main loop to monitor system inactivity and log alerts if the timeout is reached.
-    It runs continuously with a fixed sleep interval.
+    Main loop to monitor user inactivity.
+
+    Periodically checks last login and input timestamps, evaluates thresholds,
+    and sends emails or stops the service if needed.
     """
-    # Diagnostic: log environment context
+    # Log diagnostic environment values
     logging.info(f"DISPLAY={os.environ.get('DISPLAY', '<not set>')}")
     logging.info(f"XAUTHORITY={os.environ.get('XAUTHORITY', '<not set>')}")
     logging.info("📡 Inactivity Monitor started.")
 
-    # Load state
+    # Load settings from disk
+    settings = load_settings()
+    send_monitoring_on_start = settings["send_monitoring_on_start"]
+    monitoring_at_30 = settings["monitoring_at_30"]
+    monitoring_at_60 = settings["monitoring_at_60"]
+    monitoring_at_90 = settings["monitoring_at_90"]
+
+    # Load state flags and previous timestamps
     state = load_state()
     if not state:
         logging.error("No state found. Aborting monitor.")
@@ -52,40 +72,39 @@ def main():
     threshold_reached = state["threshold_reached"]
     service_disabled = state["service_disabled"]
 
-    if threshold_reached:
-        # Todo : send monitoring email, started but threshold reached (if send_monitoring_on_start activated)
-        logging.info(
-            "Threshold reached, send email to monitoring (if send_monitoring_on_start activated) and stop Inactivity Monitor."
-        )
-        return
-
-    if service_disabled:
-        # Todo : send monitoring email, started but service disabled (if send_monitoring_on_start activated)
-        logging.info(
-            "Service disabled, send email to monitoring (if send_monitoring_on_start activated) and stop Inactivity Monitor."
-        )
-        return
-
-    # Load and validate configuration
+    # Load configuration and validate it
     config = load_config(True)
     if not config:
-        # Todo : send monitoring email, started but error (if send_monitoring_on_start activated)
-
         logging.error("No configuration found. Aborting monitor.")
         return
 
     try:
         validate_config(config)
     except Exception as e:
-
-        # Todo : send monitoring email, started but error (if send_monitoring_on_start activated)
-
         logging.error(f"Invalid configuration: {e}")
         return
 
-    # Default inactivity threshold (in minutes): 30 days
+    # Handle initial state (e.g., if service is disabled or already expired)
+    if threshold_reached:
+        logging.info("Service started but threshold already reached.")
+        if send_monitoring_on_start:
+            send_start_reached_email(config, settings)
+        return
+
+    if service_disabled:
+        logging.info("Service started but is disabled.")
+        if send_monitoring_on_start:
+            send_start_disabled_email(config, settings)
+        return
+
+    logging.info("Service started and is active.")
+    if send_monitoring_on_start:
+        send_start_email(config, settings)
+
+    # Default threshold (30 days in minutes)
     threshold = config.get("timeout_minutes", 4320)
 
+    # Loop forever (until threshold is hit or service stopped)
     while True:
         try:
             logging.info("------------- Loop tick -------------")
@@ -93,10 +112,7 @@ def main():
             now = datetime.now()
             now_timestamp = now.timestamp()
 
-            # Load previous state from disk
             state_for_loop = load_state()
-
-            # Fetch updated activity timestamps
             state_updated_with_time = manage_activity_time(state_for_loop, now)
 
             last_activity_timestamp = max(
@@ -106,92 +122,81 @@ def main():
 
             if last_activity_timestamp > 0:
                 diff_ts_seconds = now_timestamp - last_activity_timestamp
-                logging.info(f"🕒 Inactivity (s): {diff_ts_seconds}")
+                diff_ts_minutes = diff_ts_seconds / 60
+                logging.info(f"🕒 Inactivity (m): {diff_ts_minutes}")
 
-                if diff_ts_seconds >= 0:
-                    diff_ts_minutes = diff_ts_seconds / 60
-                    logging.info(f"🕒 Inactivity (m): {diff_ts_minutes}")
+                # Calculate thresholds
+                threshold__30 = threshold * 0.3
+                threshold__60 = threshold * 0.6
+                threshold__90 = threshold * 0.9
 
-                    threshold__30 = threshold * 0.3
-                    threshold__60 = threshold * 0.6
-                    threshold__90 = threshold * 0.9
-
-                    if diff_ts_minutes >= threshold__30:
-                        logging.info("30% threshold reached.")
-                        if state_updated_with_time["monitoring_at_30"] is not True:
-                            # Todo : send monitoring email, 30% threshold reached. (if monitoring_at_30 activated)
-                            logging.info(
-                                "30% threshold reached, send email to monitoring"
-                            )
-                            state_updated_with_time["monitoring_at_30"] = True
-                        else:
-                            logging.info("30% threshold reached, email already sent.")
+                # === 30% Threshold
+                if diff_ts_minutes >= threshold__30:
+                    logging.info("30% threshold reached.")
+                    if not state_updated_with_time.get("monitoring_at_30"):
+                        if monitoring_at_30:
+                            send_threshold_30_email(config, settings)
+                        state_updated_with_time["monitoring_at_30"] = True
                     else:
-                        logging.info("30% threshold NOT reached.")
-                        state_updated_with_time["monitoring_at_30"] = False
-
-                    if diff_ts_minutes >= threshold__60:
-                        logging.info("60% threshold reached.")
-                        if state_updated_with_time["monitoring_at_60"] is not True:
-                            # Todo : send monitoring email, 60% threshold reached. (if monitoring_at_60 activated)
-                            logging.info(
-                                "60% threshold reached, send email to monitoring"
-                            )
-                            state_updated_with_time["monitoring_at_60"] = True
-                        else:
-                            logging.info("60% threshold reached, email already sent.")
-                    else:
-                        logging.info("60% threshold NOT reached.")
-                        state_updated_with_time["monitoring_at_60"] = False
-
-                    if diff_ts_minutes >= threshold__90:
-                        logging.info("90% threshold reached.")
-                        if state_updated_with_time["monitoring_at_90"] is not True:
-                            # Todo : send monitoring email, 90% threshold reached. (if monitoring_at_90 activated)
-                            logging.info(
-                                "90% threshold reached, send email to monitoring"
-                            )
-                            state_updated_with_time["monitoring_at_90"] = True
-                        else:
-                            logging.info("90% threshold reached, email already sent.")
-                    else:
-                        logging.info("90% threshold NOT reached.")
-                        state_updated_with_time["monitoring_at_90"] = False
-
-                    logging.info(
-                        f"🧪 Threshold check: {diff_ts_minutes} > {threshold} ?"
-                    )
-
-                    if diff_ts_minutes >= threshold:
-                        logging.warning(
-                            "⏰ Inactivity threshold reached! (TODO: send email)"
-                        )
-                        # Todo : send monitoring email, threshold reached.
-                        # Todo : send email to recipients, threshold reached.
-                        state_updated_with_time["threshold_reached"] = True
-                    else:
-                        logging.info("✅ Threshold NOT reached")
+                        logging.info("30% email already sent.")
                 else:
-                    logging.info("🌀 Time anomaly: future activity?")
-            else:
-                logging.info("⚠️ No usable activity timestamps available")
+                    state_updated_with_time["monitoring_at_30"] = False
 
-            # 💾 Save the updated state to disk
+                # === 60% Threshold
+                if diff_ts_minutes >= threshold__60:
+                    logging.info("60% threshold reached.")
+                    if not state_updated_with_time.get("monitoring_at_60"):
+                        if monitoring_at_60:
+                            send_threshold_60_email(config, settings)
+                        state_updated_with_time["monitoring_at_60"] = True
+                    else:
+                        logging.info("60% email already sent.")
+                else:
+                    state_updated_with_time["monitoring_at_60"] = False
+
+                # === 90% Threshold
+                if diff_ts_minutes >= threshold__90:
+                    logging.info("90% threshold reached.")
+                    if not state_updated_with_time.get("monitoring_at_90"):
+                        if monitoring_at_90:
+                            send_threshold_90_email(config, settings)
+                        state_updated_with_time["monitoring_at_90"] = True
+                    else:
+                        logging.info("90% email already sent.")
+                else:
+                    state_updated_with_time["monitoring_at_90"] = False
+
+                # === Final threshold
+                logging.info(f"🧪 Threshold check: {diff_ts_minutes} > {threshold} ?")
+                if diff_ts_minutes >= threshold:
+                    logging.warning("⏰ Inactivity threshold reached!")
+
+                    send_alert_to_recipient(config, settings)
+                    send_alert_to_monitoring(config, settings)
+
+                    state_updated_with_time["threshold_reached"] = True
+                else:
+                    logging.info("✅ Final threshold NOT reached")
+            else:
+                logging.info("⚠️ No usable activity timestamps found")
+
+            # Save the state
             save_state(state_updated_with_time)
 
-            if state_updated_with_time["threshold_reached"]:
+            if state_updated_with_time.get("threshold_reached"):
                 logging.warning("☠️ STOP Inactivity Monitor because threshold reached")
-                # todo stop the service !!!
+                # TODO: Stop the service programmatically here
+                break
 
             logging.info("-------------------------------------")
-            time.sleep(30)  # Check every 30 seconds
+            time.sleep(30)
 
         except Exception as e:
             logging.exception("Unexpected error in monitor loop")
-            # Todo : send monitoring email, because of erro in Loop tick
+            # TODO: Notify via email on loop failure
 
 
-# Entry point of the script
+# Entry point
 if __name__ == "__main__":
     try:
         main()
