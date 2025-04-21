@@ -36,6 +36,12 @@ sudo chmod +x "$TARGET_DIR/scripts/save_config_helper.py"
 sudo chmod +x "$TARGET_DIR/scripts/read_password_helper.py"
 sudo chmod +x "$TARGET_DIR/scripts/save_settings_helper.py"
 
+sudo cp ./deployment/inactivity-monitor.desktop /usr/share/applications/
+sudo chmod +x /usr/share/applications/inactivity-monitor.desktop
+
+gtk-update-icon-cache
+update-desktop-database
+
 # Deploy systemd service file if exists
 if [ -f "$SERVICE_FILE_PATH" ]; then
     echo "🛠️  Installing systemd service file..."

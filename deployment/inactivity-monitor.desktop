@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=0.0.6
+Type=Application
+Name=Inactivity Monitor
+Comment=Monitor inactivity and send alerts to your contacts
+Exec=/opt/inactivity-monitor/venv/bin/python3 /opt/inactivity-monitor/main.py
+Icon=/opt/inactivity-monitor/assets/icons/icon-128.png
+Terminal=false
+Categories=Utility;Monitoring;
+StartupNotify=true
