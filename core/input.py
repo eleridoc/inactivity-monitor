@@ -6,6 +6,7 @@ import subprocess
 from shutil import which
 from datetime import datetime, timedelta
 import logging
+from core.utils import log_info
 
 
 def is_xprintidle_available():
@@ -18,7 +19,7 @@ def is_xprintidle_available():
     return which("xprintidle") is not None
 
 
-def get_last_input_time():
+def get_last_input_time(enable_logs):
     """
     Estimate the last user input (keyboard/mouse) using xprintidle.
 
@@ -29,7 +30,7 @@ def get_last_input_time():
         datetime | None: Timestamp of the last input, or None on error.
     """
     if not is_xprintidle_available():
-        logging.info("xprintidle not found. Idle time won't be checked.")
+        log_info(enable_logs, "xprintidle not found. Idle time won't be checked.")
         return None
 
     try:

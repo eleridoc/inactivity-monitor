@@ -42,7 +42,9 @@ class SettingsTab(Gtk.Grid):
         row = 0
 
         # === Enable logs checkbox ===
-        self.logs_checkbox = Gtk.CheckButton(label="Enable logs")
+        self.logs_checkbox = Gtk.CheckButton(
+            label="Enable debug logs for service (can generate a lot of logs)"
+        )
         self.attach(self.logs_checkbox, 0, row, 2, 1)
         row += 1
 

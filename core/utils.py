@@ -111,3 +111,24 @@ def log_to_gui_buffer(log_buffer, log_view, message: str, exception: Exception =
     # Create a mark and scroll to it reliably
     mark = log_buffer.create_mark(None, log_buffer.get_end_iter(), False)
     log_view.scroll_to_mark(mark, 0.0, True, 0.0, 1.0)
+
+
+def log_info(enable_logs, *args):
+    """
+    Log a message using logging.info() only if logging is enabled.
+
+    This helper allows conditional logging depending on a user-defined
+    flag such as 'enable_logs' in the settings. Useful in services or
+    background tasks where verbosity is optional.
+
+    Args:
+        enable_logs (bool): Whether logging is enabled.
+        *args: Parts of the message to concatenate and log. Each arg is
+               converted to a string and joined with spaces.
+
+    Example:
+        log_info(True, "Service started with PID:", 1234)
+    """
+    if enable_logs:
+        message = " ".join(str(arg) for arg in args)
+        logging.info(message)
