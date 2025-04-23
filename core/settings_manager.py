@@ -24,6 +24,9 @@ DEFAULT_SETTINGS = {
     "monitoring_at_60": False,
     "monitoring_at_90": False,
     "startup_error": False,
+    "weekly_monitoring_enabled": False,
+    "weekly_monitoring_day": 0,
+    "weekly_monitoring_hour": 12,
 }
 
 

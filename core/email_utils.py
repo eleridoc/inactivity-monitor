@@ -50,42 +50,49 @@ def validate_recipient_list(recipient_str: str) -> list:
 
 
 # Placeholder notification methods (to be implemented later)
-def send_start_reached_email(config, settings):
+
+
+def send_weekly_email(config, settings, state):
+    """Send notification each week."""
+    logging.info("send_weekly_email")
+
+
+def send_start_reached_email(config, settings, state):
     """Send notification when monitoring threshold is initially reached."""
     logging.info("send_start_reached_email")
 
 
-def send_start_disabled_email(config, settings):
+def send_start_disabled_email(config, settings, state):
     """Send notification if monitoring is disabled."""
     logging.info("send_start_disabled_email")
 
 
-def send_start_email(config, settings):
+def send_start_email(config, settings, state):
     """Send monitoring start email."""
     logging.info("send_start_email")
 
 
-def send_threshold_30_email(config, settings):
+def send_threshold_30_email(config, settings, state):
     """Send monitoring email at 30% of timeout threshold."""
     logging.info("send_threshold_30_email")
 
 
-def send_threshold_60_email(config, settings):
+def send_threshold_60_email(config, settings, state):
     """Send monitoring email at 60% of timeout threshold."""
     logging.info("send_threshold_60_email")
 
 
-def send_threshold_90_email(config, settings):
+def send_threshold_90_email(config, settings, state):
     """Send monitoring email at 90% of timeout threshold."""
     logging.info("send_threshold_90_email")
 
 
-def send_alert_to_recipient(config, settings):
+def send_alert_to_recipient(config, settings, state):
     """Send emergency alert to predefined recipients."""
     logging.info("send_alert_to_recipient")
 
 
-def send_alert_to_monitoring(config, settings):
+def send_alert_to_monitoring(config, settings, state):
     """Send emergency alert to monitoring address."""
     logging.info("send_alert_to_monitoring")
 

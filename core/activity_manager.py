@@ -48,36 +48,36 @@ def manage_activity_time(state, now):
     last_login_timestamp = state["last_login_timestamp"]
     last_input_timestamp = state["last_input_timestamp"]
 
-    logging.info(f"Now: {now}")
-    logging.info(f"last_login: {last_login}")
-    logging.info(f"last_idle: {last_idle}")
+    logging.info(f"🕒 Now: {now}")
+    logging.info(f"🕒 last_login: {last_login}")
+    logging.info(f"🕒 last_idle: {last_idle}")
 
     # ⏱️ Update login timestamp if it's newer than previously saved
     if last_login is not None:
         login_ts = int(last_login.timestamp())
         if login_ts > last_login_timestamp:
-            logging.info(f"🆕 New login timestamp: {login_ts}")
+            logging.info(f"🕒 New login timestamp: {login_ts}")
             state["last_login_timestamp"] = login_ts
 
     # ⌨️🖱️ Update input timestamp only if a user is currently logged in
     if is_user_logged_in():
-        logging.info("✅ User is logged in. Checking input activity...")
+        logging.info("🟢 User is logged in. Checking input activity...")
         if last_idle is not None:
             idle_ts = int(last_idle.timestamp())
             if idle_ts > last_input_timestamp:
-                logging.info(f"🆕 New input timestamp: {idle_ts}")
+                logging.info(f"🕒 New input timestamp: {idle_ts}")
                 state["last_input_timestamp"] = idle_ts
     else:
         # Log why input time isn't used if no user is logged in
         if last_idle is not None:
             logging.info(
-                "👤 User is logged out. Input time exists but will not be used."
+                "🔴 User is logged out. Input time exists but will not be used."
             )
         else:
-            logging.info("👤 User is logged out. No input time available.")
+            logging.info("🔴 User is logged out. No input time available.")
 
     # Log final timestamps
-    logging.info(f"new_last_login_timestamp: {state['last_login_timestamp']}")
-    logging.info(f"new_last_input_timestamp: {state['last_input_timestamp']}")
+    logging.info(f"🕒 new_last_login_timestamp: {state['last_login_timestamp']}")
+    logging.info(f"🕒 new_last_input_timestamp: {state['last_input_timestamp']}")
 
     return state

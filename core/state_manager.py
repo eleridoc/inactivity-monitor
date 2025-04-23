@@ -21,6 +21,7 @@ DEFAULT_STATE = {
     "monitoring_60_reached": False,
     "monitoring_90_reached": False,
     "service_disabled": False,
+    "last_weekly_monitoring_timestamp": 0,
 }
 
 

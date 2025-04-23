@@ -15,6 +15,7 @@ from core.settings_manager import (
 )
 from core.email_utils import validate_email_address
 from email_validator import EmailNotValidError
+import calendar
 
 
 class SettingsTab(Gtk.Grid):
@@ -47,8 +48,8 @@ class SettingsTab(Gtk.Grid):
 
         # === Separator: logs -> sender override ===
         separator_01 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        separator_01.set_margin_top(10)
-        separator_01.set_margin_bottom(10)
+        separator_01.set_margin_top(5)
+        separator_01.set_margin_bottom(5)
         separator_01.set_hexpand(True)
         separator_01.set_halign(Gtk.Align.FILL)
         self.attach(separator_01, 0, row, 2, 1)
@@ -64,8 +65,8 @@ class SettingsTab(Gtk.Grid):
 
         # === Separator: sender -> monitoring logic ===
         separator_02 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        separator_02.set_margin_top(10)
-        separator_02.set_margin_bottom(10)
+        separator_02.set_margin_top(5)
+        separator_02.set_margin_bottom(5)
         separator_02.set_hexpand(True)
         separator_02.set_halign(Gtk.Align.FILL)
         self.attach(separator_02, 0, row, 2, 1)
@@ -97,6 +98,48 @@ class SettingsTab(Gtk.Grid):
         self.attach(self.at_90_checkbox, 0, row, 2, 1)
         row += 1
 
+        # === Separator: sender -> monitoring logic ===
+        separator_03 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        separator_03.set_margin_top(5)
+        separator_03.set_margin_bottom(5)
+        separator_03.set_hexpand(True)
+        separator_03.set_halign(Gtk.Align.FILL)
+        self.attach(separator_03, 0, row, 2, 1)
+        row += 1
+
+        # === Weekly monitoring ===
+        self.weekly_checkbox = Gtk.CheckButton(label="Send monitoring email weekly")
+        self.attach(self.weekly_checkbox, 0, row, 2, 1)
+        row += 1
+
+        # Day of week selector
+        self.weekday_combo = Gtk.ComboBoxText()
+        for i in range(7):
+            self.weekday_combo.append_text(calendar.day_name[i])
+        self.weekday_combo.set_active(0)
+        self.attach(Gtk.Label(label="Day of the week:"), 0, row, 1, 1)
+        self.attach(self.weekday_combo, 1, row, 1, 1)
+        row += 1
+
+        # Time selector
+        self.hour_spin = Gtk.SpinButton()
+        self.hour_spin.set_range(0, 23)
+        self.hour_spin.set_increments(1, 1)
+        self.hour_spin.set_numeric(True)
+
+        self.attach(Gtk.Label(label="Hour of the day:"), 0, row, 1, 1)
+        self.attach(self.hour_spin, 1, row, 1, 1)
+        row += 1
+
+        # === Separator: sender -> monitoring logic ===
+        separator_04 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        separator_04.set_margin_top(5)
+        separator_04.set_margin_bottom(5)
+        separator_04.set_hexpand(True)
+        separator_04.set_halign(Gtk.Align.FILL)
+        self.attach(separator_04, 0, row, 2, 1)
+        row += 1
+
         # === Save button ===
         save_button = Gtk.Button(label="Save options")
         save_button.connect("clicked", self.on_save_clicked)
@@ -108,14 +151,20 @@ class SettingsTab(Gtk.Grid):
         """
         settings = load_settings()
 
-        self.logs_checkbox.set_active(settings.get("enable_logs", True))
+        self.logs_checkbox.set_active(settings.get("enable_logs", False))
         self.start_monitoring_checkbox.set_active(
             settings.get("send_monitoring_on_start", False)
         )
         self.monitoring_sender_entry.set_text(settings.get("monitoring_sender", ""))
-        self.at_30_checkbox.set_active(settings.get("monitoring_at_30", True))
-        self.at_60_checkbox.set_active(settings.get("monitoring_at_60", True))
-        self.at_90_checkbox.set_active(settings.get("monitoring_at_90", True))
+        self.at_30_checkbox.set_active(settings.get("monitoring_at_30", False))
+        self.at_60_checkbox.set_active(settings.get("monitoring_at_60", False))
+        self.at_90_checkbox.set_active(settings.get("monitoring_at_90", False))
+
+        self.weekly_checkbox.set_active(
+            settings.get("monitoring_weekly_enabled", False)
+        )
+        self.weekday_combo.set_active(settings.get("monitoring_weekly_day", 0))
+        self.hour_spin.set_value(settings.get("monitoring_weekly_hour", 12))
 
         self.main_window.log("⚙️ Settings loaded.")
 
@@ -160,6 +209,9 @@ class SettingsTab(Gtk.Grid):
             "monitoring_at_30": self.at_30_checkbox.get_active(),
             "monitoring_at_60": self.at_60_checkbox.get_active(),
             "monitoring_at_90": self.at_90_checkbox.get_active(),
+            "monitoring_weekly_enabled": self.weekly_checkbox.get_active(),
+            "monitoring_weekly_day": self.weekday_combo.get_active(),
+            "monitoring_weekly_hour": int(self.hour_spin.get_value()),
         }
 
         validate_settings(settings)
